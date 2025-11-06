@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" id="Definitions_0b12vum" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.6.1">
+  <bpmn:collaboration id="Collaboration_1f30zxk">
+    <bpmn:participant id="Participant_12otbel" name="veterinarias" processRef="Process_0zsa2w9" />
+    <bpmn:participant id="Participant_0x7hbgp" name="USUARIO CONTACTANDO A UN VETERIARIO" processRef="Process_1etc3ye" />
+    <bpmn:messageFlow id="Flow_0vl7n4q" sourceRef="Activity_00g8qu3" targetRef="Activity_1j9hs3l" />
+    <bpmn:messageFlow id="Flow_0jkg3fv" sourceRef="Activity_03vo5mv" targetRef="Activity_0guqhaw" />
+    <bpmn:textAnnotation id="TextAnnotation_0arq3gj">
+      <bpmn:text>La App tendra una un mapa interactivo, por lo que esta accion no saldria del dominio de la App</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="TextAnnotation_12iho1i">
+      <bpmn:text>se elimina una service task debido a que puede automatizarse</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1uo042g" associationDirection="None" sourceRef="Flow_00prvdx" targetRef="TextAnnotation_12iho1i" />
+    <bpmn:association id="Association_0kract7" associationDirection="None" sourceRef="Activity_0fcngkv" targetRef="TextAnnotation_0arq3gj" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_0zsa2w9">
+    <bpmn:serviceTask id="Activity_1j9hs3l" name="Mostrar servicios que ofrece la veterinaria">
+      <bpmn:outgoing>Flow_0u712r6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0guqhaw" name="Redireccionar a contacto de veteriaria">
+      <bpmn:outgoing>Flow_0ul8m31</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_00uc4i6">
+      <bpmn:incoming>Flow_0u712r6</bpmn:incoming>
+      <bpmn:incoming>Flow_0ul8m31</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0u712r6" sourceRef="Activity_1j9hs3l" targetRef="Event_00uc4i6" />
+    <bpmn:sequenceFlow id="Flow_0ul8m31" sourceRef="Activity_0guqhaw" targetRef="Event_00uc4i6" />
+  </bpmn:process>
+  <bpmn:process id="Process_1etc3ye">
+    <bpmn:laneSet id="LaneSet_164qzre" />
+    <bpmn:startEvent id="Event_0paxt1h">
+      <bpmn:outgoing>Flow_0njbzv2</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_1linvph" name="Buscar veterinario">
+      <bpmn:incoming>Flow_0njbzv2</bpmn:incoming>
+      <bpmn:outgoing>Flow_00prvdx</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_0miznbe" name="OPCIONES PARA LA VETERINARIA (ESTILO MENÚ)">
+      <bpmn:incoming>Flow_0y9ntdo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vmfw51</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0r6sgay</bpmn:outgoing>
+      <bpmn:outgoing>Flow_15nzz7z</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Activity_03vo5mv" name="Contacto de la veterinaria">
+      <bpmn:incoming>Flow_0r6sgay</bpmn:incoming>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_00g8qu3" name="Servicios disponibles">
+      <bpmn:incoming>Flow_15nzz7z</bpmn:incoming>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_0v2xppg" name="Mostrar Ruta">
+      <bpmn:incoming>Flow_1vmfw51</bpmn:incoming>
+      <bpmn:outgoing>Flow_1y2bi6n</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_0fcngkv" name="Muestra el mapa interactivo de la app con la ruta hacia la veterinaria">
+      <bpmn:incoming>Flow_1y2bi6n</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dgl2wc</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_0vgb7z5">
+      <bpmn:incoming>Flow_1dgl2wc</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_1cplqc5" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0njbzv2" sourceRef="Event_0paxt1h" targetRef="Activity_1linvph" />
+    <bpmn:sequenceFlow id="Flow_00prvdx" sourceRef="Activity_1linvph" targetRef="Activity_012nlk6" />
+    <bpmn:sequenceFlow id="Flow_1cujh0j" sourceRef="Activity_012nlk6" targetRef="Activity_1g5brre" />
+    <bpmn:sequenceFlow id="Flow_0y9ntdo" sourceRef="Activity_1g5brre" targetRef="Gateway_0miznbe" />
+    <bpmn:sequenceFlow id="Flow_1vmfw51" sourceRef="Gateway_0miznbe" targetRef="Activity_0v2xppg" />
+    <bpmn:sequenceFlow id="Flow_0r6sgay" sourceRef="Gateway_0miznbe" targetRef="Activity_03vo5mv" />
+    <bpmn:sequenceFlow id="Flow_15nzz7z" sourceRef="Gateway_0miznbe" targetRef="Activity_00g8qu3" />
+    <bpmn:sequenceFlow id="Flow_1y2bi6n" sourceRef="Activity_0v2xppg" targetRef="Activity_0fcngkv" />
+    <bpmn:sequenceFlow id="Flow_1dgl2wc" sourceRef="Activity_0fcngkv" targetRef="Event_0vgb7z5" />
+    <bpmn:serviceTask id="Activity_012nlk6" name="muestra de los veterinarios">
+      <bpmn:incoming>Flow_00prvdx</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cujh0j</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_1g5brre" name="Elegir veterinaria">
+      <bpmn:incoming>Flow_1cujh0j</bpmn:incoming>
+      <bpmn:outgoing>Flow_0y9ntdo</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1f30zxk">
+      <bpmndi:BPMNShape id="BPMNShape_10ev17m" bpmnElement="Participant_12otbel" isHorizontal="true">
+        <dc:Bounds x="1280" y="80" width="990" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1bet1xu" bpmnElement="Activity_1j9hs3l">
+        <dc:Bounds x="2090" y="170" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_02viujs" bpmnElement="Activity_0guqhaw">
+        <dc:Bounds x="1710" y="170" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_102ld5i" bpmnElement="Event_00uc4i6">
+        <dc:Bounds x="1932" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_06dypkh" bpmnElement="Flow_0u712r6">
+        <di:waypoint x="2090" y="210" />
+        <di:waypoint x="1968" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1qx87yk" bpmnElement="Flow_0ul8m31">
+        <di:waypoint x="1810" y="210" />
+        <di:waypoint x="1932" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_0v8wpy9" bpmnElement="Participant_0x7hbgp" isHorizontal="true">
+        <dc:Bounds x="160" y="360" width="2110" height="510" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1d0rx9t" bpmnElement="Event_0paxt1h">
+        <dc:Bounds x="272" y="602" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0bujskz" bpmnElement="Activity_1linvph">
+        <dc:Bounds x="390" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0lukhn6" bpmnElement="Gateway_0miznbe" isMarkerVisible="true">
+        <dc:Bounds x="1355" y="595" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1288" y="543" width="83" height="53" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1h2kixb" bpmnElement="Activity_03vo5mv">
+        <dc:Bounds x="1490" y="420" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1ierxm9" bpmnElement="Activity_00g8qu3">
+        <dc:Bounds x="1490" y="750" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1x8qz5v" bpmnElement="Activity_0v2xppg">
+        <dc:Bounds x="1490" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0um6ped" bpmnElement="Activity_0fcngkv" bioc:stroke="#831311" bioc:fill="#ffcdd2" color:background-color="#ffcdd2" color:border-color="#831311">
+        <dc:Bounds x="1770" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0swh6rq" bpmnElement="Event_0vgb7z5">
+        <dc:Bounds x="1972" y="602" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0iza12e" bpmnElement="Activity_012nlk6">
+        <dc:Bounds x="780" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_11sl11x" bpmnElement="Activity_1g5brre">
+        <dc:Bounds x="1080" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_1w8jsg5" bpmnElement="Flow_0njbzv2">
+        <di:waypoint x="308" y="620" />
+        <di:waypoint x="390" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1rxirxo" bpmnElement="Flow_00prvdx">
+        <di:waypoint x="490" y="620" />
+        <di:waypoint x="780" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1s5oe6n" bpmnElement="Flow_1cujh0j">
+        <di:waypoint x="880" y="620" />
+        <di:waypoint x="1080" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0r0p6k5" bpmnElement="Flow_0y9ntdo">
+        <di:waypoint x="1180" y="620" />
+        <di:waypoint x="1355" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0dbd6cd" bpmnElement="Flow_1vmfw51">
+        <di:waypoint x="1405" y="620" />
+        <di:waypoint x="1490" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0n9m0hy" bpmnElement="Flow_0r6sgay">
+        <di:waypoint x="1380" y="595" />
+        <di:waypoint x="1380" y="460" />
+        <di:waypoint x="1490" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_05ruop3" bpmnElement="Flow_15nzz7z">
+        <di:waypoint x="1380" y="645" />
+        <di:waypoint x="1380" y="790" />
+        <di:waypoint x="1490" y="790" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_05t4pai" bpmnElement="Flow_1y2bi6n">
+        <di:waypoint x="1590" y="620" />
+        <di:waypoint x="1770" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0t75wnk" bpmnElement="Flow_1dgl2wc">
+        <di:waypoint x="1870" y="620" />
+        <di:waypoint x="1972" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_0qvb66k" bpmnElement="TextAnnotation_0arq3gj">
+        <dc:Bounds x="1880" y="440" width="140" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_12iho1i_di" bpmnElement="TextAnnotation_12iho1i" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="570" y="500" width="179.99212639395506" height="55.749133350403326" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_0m212yp" bpmnElement="Flow_0vl7n4q">
+        <di:waypoint x="1590" y="790" />
+        <di:waypoint x="2140" y="790" />
+        <di:waypoint x="2140" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0p3v05r" bpmnElement="Flow_0jkg3fv">
+        <di:waypoint x="1590" y="460" />
+        <di:waypoint x="1760" y="460" />
+        <di:waypoint x="1760" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1uo042g_di" bpmnElement="Association_1uo042g">
+        <di:waypoint x="547" y="620" />
+        <di:waypoint x="593" y="556" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1tkpdrk" bpmnElement="Association_0kract7">
+        <di:waypoint x="1839" y="580" />
+        <di:waypoint x="1880" y="496" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
