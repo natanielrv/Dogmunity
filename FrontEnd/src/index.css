@@ -1,0 +1,70 @@
+
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', sans-serif;
+  --font-serif: 'Poppins', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+}
+
+:root {
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  --color-darkgreen: #002E38;
+  --color-blue: #003c58;
+  --color-turquesa: #06717e;
+  --color-gris: #ebebeb;
+  --color-white-smoke: #fefefe;
+  --color-black: #1f1b1b;
+}
+
+
+html,
+body {
+  height: 100vh;
+  /* Esto hará que tanto html como body ocupen la altura completa de la ventana de visualización */
+  margin: 0;
+  /* Elimina el margen por defecto */
+  padding: 0;
+  /* Elimina el relleno por defecto */
+}
+
+body {
+  height: 100%;
+  min-height: 100vh;
+  min-width: fit-content;
+  width: 100%;
+  display: flex;
+}
+
+#root {
+  height: 100%;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+
+  button {
+    background-color: #f9f9f9;
+  }
+}
