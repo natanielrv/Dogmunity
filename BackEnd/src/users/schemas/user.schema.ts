@@ -1,4 +1,3 @@
-// src/users/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -11,8 +10,8 @@ export interface UserDocument extends User, Document {
   timestamps: true,
   toJSON: {
     virtuals: true,
-    transform: (_, ret) => {
-      ret.id = ret._id;
+    transform: (_, ret: any) => {
+      ret.id = ret._id?.toString();
       delete ret._id;
       delete ret.__v;
       return ret;
