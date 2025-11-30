@@ -1,6 +1,6 @@
 {
-  "name": "gpi-backend",
-  "version": "0.0.0",
+  "name": "BackEnd",
+  "version": "0.0.1",
   "description": "Backend para el template GPI - Universidad de Valparaíso",
   "author": "",
   "private": true,

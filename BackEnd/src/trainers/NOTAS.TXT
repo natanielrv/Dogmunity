@@ -1,0 +1,1 @@
+la carpeta trainers se encargaria mantener como una entidad a los entrenadores. tiene toda la estructura para funcionar solo faltando conectar con react

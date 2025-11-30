@@ -1,0 +1,8 @@
+packages:
+  - BackEnd
+  - FrontEnd
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - bcrypt
+  - esbuild
