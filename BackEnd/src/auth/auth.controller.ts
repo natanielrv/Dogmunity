@@ -1,12 +1,17 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CheckEmailDto } from './dto/verificacion-mail.dto';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('check-email')
+  async checkEmail(@Body() checkEmailDto: CheckEmailDto) {
+    return this.authService.processEmail(checkEmailDto);
+  }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
@@ -16,11 +21,5 @@ export class AuthController {
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  getProfile(@Request() req) {
-    return this.authService.me(req.user.userId);
   }
 }

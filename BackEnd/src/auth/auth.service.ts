@@ -1,4 +1,3 @@
-// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -6,18 +5,42 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from 'src/users/schemas/dto/create-user.dto';
+import { CheckEmailDto } from './dto/verificacion-mail.dto'; // Tu DTO de solo email
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    // Eliminé 'existingUsers' del constructor, no lo necesitas con BD real.
   ) {}
+
+  // --- NUEVA FUNCIÓN PARA EL PASO 1 (Check Email) ---
+  async processEmail(checkEmailDto: CheckEmailDto) {
+    const { email } = checkEmailDto;
+    
+    // Usamos tu servicio real para buscar en la BD
+    const user = await this.usersService.findByEmail(email);
+    
+    // Si 'user' tiene datos, existe. Si es null/undefined, no existe.
+    const exists = !!user; 
+
+    return {
+      status: 'success',
+      exists: exists,
+      // Si existe, lo mandamos a login. Si no, a registro.
+      nextStep: exists ? 'login' : 'register', 
+      message: exists 
+        ? 'Usuario encontrado, solicita contraseña' 
+        : 'Usuario no encontrado, solicita registro'
+    };
+  }
+  // --------------------------------------------------
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user.toObject();
+      const { password, ...result } = user.toObject ? user.toObject() : user;
       return result;
     }
     return null;
@@ -29,12 +52,11 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Accedemos a la propiedad id en lugar de _id
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = { email: user.email, sub: user.id || user._id, role: user.role };
 
     return {
       user: {
-        id: user.id,
+        id: user.id || user._id,
         email: user.email,
         name: user.name,
         lastName: user.lastName,
@@ -45,7 +67,6 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    // Creamos un objeto CreateUserDto explícitamente para asegurar compatibilidad de tipos
     const createUserDto: CreateUserDto = {
       name: registerDto.name,
       lastName: registerDto.lastName,
@@ -53,13 +74,8 @@ export class AuthService {
       password: registerDto.password,
     };
 
-    // Pasamos el DTO correcto al servicio de usuarios
     const newUser = await this.usersService.create(createUserDto);
-
-    // Convertimos a un objeto plano para manejar las propiedades correctamente
     const user = newUser.toObject ? newUser.toObject() : newUser;
-
-    // Usamos id en lugar de _id
     const userId = user.id || user._id?.toString();
 
     const payload = {
