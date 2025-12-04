@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "description": "Monorepo root for Dogmunity",
-"scripts": {
+  "scripts": {
     "dev": "concurrently -n \"BACK,FRONT\" -c \"blue,magenta\" \"pnpm --filter BackEnd start:dev\" \"pnpm --filter FrontEnd dev\"",
     "install:all": "pnpm install -r"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "react-data-table-component": "^7.7.0"
   }
 }
