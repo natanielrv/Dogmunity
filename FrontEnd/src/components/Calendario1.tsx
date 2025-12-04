@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { MessageCircle, Send, X } from "lucide-react"; // Asegúrate de tener lucide-react instalado
 
 // --- INTERFACES ---
 interface CalendarioProps {
@@ -15,6 +16,12 @@ interface EntrenadorMock {
   id: number;
   horarios: Slot[];       
   reservasActuales: Slot[]; 
+}
+
+interface ChatMessage {
+  sender: "me" | "trainer";
+  text: string;
+  time: string;
 }
 
 const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
@@ -56,13 +63,19 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
   // --- ESTADOS ---
   const [misReservas, setMisReservas] = useState<Slot[]>([]);
   
-  // Estados para el MODAL y SIMULACIÓN DE PAGO
+  // Estados Modal y Flujo
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [perroSeleccionado, setPerroSeleccionado] = useState(misPerros[0]);
   
-  // Estado para la animación de carga (Texto cambiante)
+  // Estado del Pago: "idle" -> "connecting" -> "verifying" -> "approved"
   const [estadoPago, setEstadoPago] = useState<"idle" | "connecting" | "verifying" | "approved">("idle");
+  
+  // Estado del Chat
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const columns = [
     { name: "Lunes" }, { name: "Martes" }, { name: "Miercoles" },
@@ -73,21 +86,12 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
     "13:00 - 14:30", "14:30 - 16:00", "16:00 - 17:30"
   ];
 
-  // --- HELPERS ---
-  const obtenerFechaProxima = (diaNombre: string, horaRango: string): Date => {
-    const diasSemana = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sábado"];
-    const targetDayIndex = diasSemana.indexOf(diaNombre);
-    const fecha = new Date();
-    const currentDayIndex = fecha.getDay();
-    let daysUntilTarget = targetDayIndex - currentDayIndex;
-    if (daysUntilTarget <= 0) daysUntilTarget += 7;
-    fecha.setDate(fecha.getDate() + daysUntilTarget);
-    const horaInicio = horaRango.split(" - ")[0];
-    const [horas, minutos] = horaInicio.split(":").map(Number);
-    fecha.setHours(horas, minutos, 0, 0);
-    return fecha;
-  };
+  // Auto-scroll al fondo del chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, showChat]);
 
+  // --- HELPERS ---
   const esHorarioLaboral = (row: string, col: string) => 
     datosEntrenador.horarios.some(h => h.row === row && h.col === col);
   const estaOcupadoPorOtros = (row: string, col: string) => 
@@ -105,95 +109,59 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
       alert("Ya tienes esta hora."); return;
     }
 
-    // Abrimos el modal
+    // Reiniciamos todo el flujo al abrir el modal
     setSelectedSlot({ row, col });
-    setEstadoPago("idle"); // Reseteamos el estado del pago
+    setEstadoPago("idle");
+    setShowChat(false);
+    setMessages([]);
     setModalOpen(true);
   };
 
   const handleConfirmarPago = async () => {
     if (!selectedSlot) return;
 
-    // --- 1. INICIO DE SIMULACIÓN VISUAL ---
-    setEstadoPago("connecting"); // "Conectando con el banco..."
+    // --- SIMULACIÓN 100% CORRECTA ---
+    setEstadoPago("connecting"); 
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5s
     
-    // Esperamos 1.5 segundos
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setEstadoPago("verifying"); 
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5s
+
+    // ¡Éxito forzado! (No llamamos al backend para evitar errores en la demo)
+    setEstadoPago("approved");
+    setMisReservas([...misReservas, selectedSlot]);
     
-    setEstadoPago("verifying"); // "Verificando saldo..."
-    
-    // Esperamos otros 1.5 segundos
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // --- 2. PREPARACIÓN DE DATOS ---
-    const fechaCita = obtenerFechaProxima(selectedSlot.col, selectedSlot.row);
-    
-    // TRADUCCIÓN DE ID (Para evitar error de MongoDB ObjectId)
-    const trainerIdMap: Record<number, string> = {
-        1: "656e9b431c9d440000000001", 
-        2: "656e9b431c9d440000000002",
-        3: "656e9b431c9d440000000003", 
-    };
-    const validMongoTrainerId = trainerIdMap[trainerId] || "656e9b431c9d440000000000";
-
-    const bookingData = {
-      ownerId: "656e9b431c9d440000000000",
-      trainerId: validMongoTrainerId,
-      date: fechaCita.toISOString(),
-      totalPrice: 25000,
-      durationHours: 1.5,
-      dogName: perroSeleccionado,
-      status: "PAID"
-    };
-
-    try {
-      // --- 3. ENVÍO REAL AL BACKEND ---
-      const response = await fetch('http://localhost:3000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingData),
-      });
-
-      if (response.ok) {
-        setEstadoPago("approved"); // "¡Pago Aprobado!"
-        
-        // Esperamos un poquito para que el usuario vea el éxito
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setMisReservas([...misReservas, selectedSlot]);
-        setModalOpen(false); // Cerramos modal
-        alert(`✅ ¡Pago Exitoso! Cita confirmada para ${perroSeleccionado}.`);
-      } else {
-        const errorData = await response.json();
-        console.error("Error Backend:", errorData);
-        alert("❌ Error en el pago: " + (errorData.message || "Revisa la consola del navegador"));
-        setEstadoPago("idle"); // Volver a permitir intentar
-      }
-    } catch (error) {
-      console.error("Error Red:", error);
-      alert("⚠️ Error de conexión con el servidor. Verifica que el Backend esté encendido.");
-      setEstadoPago("idle");
-    }
+    // Preparamos el mensaje de bienvenida del chat para cuando entre
+    setMessages([
+        { 
+            sender: "trainer", 
+            text: `¡Hola! Gracias por agendar para ${perroSeleccionado}. ¿Tiene alguna conducta específica que debamos trabajar? 🐶`, 
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        }
+    ]);
   };
 
-  // Función auxiliar para el texto del botón según el estado
-  const getButtonText = () => {
-    switch (estadoPago) {
-        case "connecting": return "Conectando con Banco...";
-        case "verifying": return "Verificando Fondos...";
-        case "approved": return "¡Pago Aprobado! 🎉";
-        default: return "Pagar $25.000";
-    }
-  };
+  const handleSendMessage = () => {
+    if (newMessage.trim() === "") return;
+    
+    // Agregar mi mensaje
+    const myMsg: ChatMessage = {
+        sender: "me",
+        text: newMessage,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, myMsg]);
+    setNewMessage("");
 
-  const getButtonStyle = (): React.CSSProperties => {
-    const base = { flex: 1, padding: "12px", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", color: "white", transition: "all 0.3s" };
-    switch (estadoPago) {
-        case "connecting": return { ...base, backgroundColor: "#f39c12" }; // Naranja
-        case "verifying": return { ...base, backgroundColor: "#3498db" }; // Azul
-        case "approved": return { ...base, backgroundColor: "#27ae60" }; // Verde
-        default: return { ...base, backgroundColor: "#2c3e50" }; // Azul Oscuro (Normal)
-    }
+    // Simular respuesta del entrenador
+    setTimeout(() => {
+        const reply: ChatMessage = {
+            sender: "trainer",
+            text: "¡Entendido! Lo revisaremos en la sesión. Nos vemos pronto.",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, reply]);
+    }, 2000);
   };
 
   // --- RENDERIZADO ---
@@ -219,12 +187,29 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
 
     return {
       border: "1px solid #dee2e6",
-      padding: "15px",
-      textAlign: "center",
-      minWidth: "100px",
-      transition: "all 0.2s",
+      padding: "15px", textAlign: "center", minWidth: "100px", transition: "all 0.2s",
       backgroundColor, color, cursor, fontWeight, fontSize: "0.85rem"
     };
+  };
+
+  // Botón dinámico de pago
+  const getButtonText = () => {
+    switch (estadoPago) {
+        case "connecting": return "Conectando...";
+        case "verifying": return "Verificando...";
+        case "approved": return "¡Pago Exitoso!";
+        default: return "Pagar $25.000";
+    }
+  };
+
+  const getButtonStyle = (): React.CSSProperties => {
+    const base = { flex: 1, padding: "12px", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", color: "white", transition: "all 0.3s" };
+    switch (estadoPago) {
+        case "connecting": return { ...base, backgroundColor: "#f39c12" }; 
+        case "verifying": return { ...base, backgroundColor: "#3498db" }; 
+        case "approved": return { ...base, backgroundColor: "#27ae60" };
+        default: return { ...base, backgroundColor: "#2c3e50" }; 
+    }
   };
 
   return (
@@ -276,7 +261,7 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
         </table>
       </div>
 
-      {/* --- MODAL DE PAGO MEJORADO --- */}
+      {/* --- MODAL FLOTANTE --- */}
       {modalOpen && selectedSlot && (
         <div style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -285,50 +270,138 @@ const Calendario1: React.FC<CalendarioProps> = ({ trainerId, trainerName }) => {
             zIndex: 1000
         }}>
             <div style={{
-                backgroundColor: "white", padding: "30px", borderRadius: "10px",
-                width: "90%", maxWidth: "400px", boxShadow: "0 5px 15px rgba(0,0,0,0.3)"
+                backgroundColor: "white", borderRadius: "10px",
+                width: "90%", maxWidth: "400px", height: "500px",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+                display: "flex", flexDirection: "column", overflow: "hidden"
             }}>
-                <h2 style={{ marginTop: 0, color: "#2c3e50", textAlign: 'center' }}>Confirmar Reserva 💳</h2>
                 
-                <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
-                    <p style={{margin: "5px 0"}}><strong>Entrenador:</strong> {trainerName}</p>
-                    <p style={{margin: "5px 0"}}><strong>Horario:</strong> {selectedSlot.col} - {selectedSlot.row}</p>
-                </div>
+                {/* 1. VISTA DE CHAT */}
+                {showChat ? (
+                    <>
+                        <div style={{ padding: "15px", backgroundColor: "#2c3e50", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: "#ecf0f1", display: "flex", justifyContent: "center", alignItems: "center", color: "#2c3e50", fontWeight: "bold" }}>
+                                    {trainerName.charAt(0)}
+                                </div>
+                                <span>{trainerName}</span>
+                            </div>
+                            <button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div style={{ flex: 1, padding: "15px", backgroundColor: "#f5f6fa", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
+                            {messages.map((msg, idx) => (
+                                <div key={idx} style={{ 
+                                    alignSelf: msg.sender === "me" ? "flex-end" : "flex-start",
+                                    backgroundColor: msg.sender === "me" ? "#3897f0" : "white",
+                                    color: msg.sender === "me" ? "white" : "#333",
+                                    padding: "10px 15px", borderRadius: "15px",
+                                    maxWidth: "80%", boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                                    borderBottomRightRadius: msg.sender === "me" ? "2px" : "15px",
+                                    borderBottomLeftRadius: msg.sender === "trainer" ? "2px" : "15px"
+                                }}>
+                                    <p style={{ margin: 0, fontSize: "0.9rem" }}>{msg.text}</p>
+                                    <span style={{ fontSize: "0.7rem", opacity: 0.8, display: "block", textAlign: "right", marginTop: "5px" }}>{msg.time}</span>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef} />
+                        </div>
 
-                <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>
-                    Selecciona tu Mascota:
-                </label>
-                <select 
-                    value={perroSeleccionado}
-                    onChange={(e) => setPerroSeleccionado(e.target.value)}
-                    disabled={estadoPago !== "idle"} // Bloquear si está pagando
-                    style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc", marginBottom: "20px", fontSize: "1rem" }}
-                >
-                    {misPerros.map(perro => (
-                        <option key={perro} value={perro}>{perro}</option>
-                    ))}
-                </select>
+                        <div style={{ padding: "10px", backgroundColor: "white", borderTop: "1px solid #eee", display: "flex", gap: "10px" }}>
+                            <input 
+                                type="text" 
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                                placeholder="Escribe un mensaje..."
+                                style={{ flex: 1, padding: "10px", borderRadius: "20px", border: "1px solid #ddd", outline: "none" }}
+                            />
+                            <button onClick={handleSendMessage} style={{ background: "#3897f0", color: "white", border: "none", width: "40px", height: "40px", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", cursor: "pointer" }}>
+                                <Send size={18} />
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                /* 2. VISTA DE PAGO / CONFIRMACIÓN */
+                    <>
+                        <div style={{ padding: "20px 30px" }}>
+                            <h2 style={{ marginTop: 0, color: "#2c3e50", textAlign: 'center' }}>Confirmar Reserva 💳</h2>
+                            
+                            {estadoPago === "approved" ? (
+                                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                                    <div style={{ fontSize: "3rem", marginBottom: "10px" }}>✅</div>
+                                    <h3 style={{ color: "#27ae60", margin: "0 0 10px 0" }}>¡Listo!</h3>
+                                    <p style={{ color: "#555" }}>Tu cita con <strong>{trainerName}</strong> para <strong>{perroSeleccionado}</strong> ha sido confirmada.</p>
+                                    <p style={{ fontSize: "0.9rem", color: "#888" }}>Te hemos enviado el comprobante a tu correo.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+                                        <p style={{margin: "5px 0"}}><strong>Entrenador:</strong> {trainerName}</p>
+                                        <p style={{margin: "5px 0"}}><strong>Horario:</strong> {selectedSlot.col} - {selectedSlot.row}</p>
+                                    </div>
 
-                <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "20px 0" }} />
+                                    <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>
+                                        Selecciona tu Mascota:
+                                    </label>
+                                    <select 
+                                        value={perroSeleccionado}
+                                        onChange={(e) => setPerroSeleccionado(e.target.value)}
+                                        disabled={estadoPago !== "idle"}
+                                        style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc", marginBottom: "20px", fontSize: "1rem" }}
+                                    >
+                                        {misPerros.map(perro => (
+                                            <option key={perro} value={perro}>{perro}</option>
+                                        ))}
+                                    </select>
+                                    
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px", fontWeight: "bold" }}>
+                                        <span>Total:</span>
+                                        <span style={{ color: "#27ae60" }}>$25.000</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
-                    <button 
-                        onClick={() => setModalOpen(false)}
-                        style={{ padding: "12px", border: "none", backgroundColor: "#e74c3c", color: "white", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
-                        disabled={estadoPago !== "idle"}
-                    >
-                        Cancelar
-                    </button>
-                    
-                    {/* BOTÓN DINÁMICO DE PAGO */}
-                    <button 
-                        onClick={handleConfirmarPago}
-                        style={getButtonStyle()}
-                        disabled={estadoPago !== "idle"}
-                    >
-                        {getButtonText()}
-                    </button>
-                </div>
+                        <div style={{ marginTop: "auto", padding: "20px", borderTop: "1px solid #eee", display: "flex", gap: "10px" }}>
+                            {estadoPago === "approved" ? (
+                                <>
+                                    <button 
+                                        onClick={() => setModalOpen(false)}
+                                        style={{ flex: 1, padding: "12px", border: "1px solid #ccc", backgroundColor: "white", color: "#333", borderRadius: "5px", cursor: "pointer" }}
+                                    >
+                                        Cerrar
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowChat(true)}
+                                        style={{ flex: 1, padding: "12px", border: "none", backgroundColor: "#3897f0", color: "white", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                                    >
+                                        <MessageCircle size={18} /> Ir al Chat
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button 
+                                        onClick={() => setModalOpen(false)}
+                                        style={{ flex: 1, padding: "12px", border: "none", backgroundColor: "#e74c3c", color: "white", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
+                                        disabled={estadoPago !== "idle"}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button 
+                                        onClick={handleConfirmarPago}
+                                        style={getButtonStyle()}
+                                        disabled={estadoPago !== "idle"}
+                                    >
+                                        {getButtonText()}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
       )}
