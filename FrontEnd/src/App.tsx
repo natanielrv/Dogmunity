@@ -6,7 +6,7 @@ import Login from './pages/authentication/Login';
 // 2. Importación del NUEVO Home (El Feed tipo Instagram)
 // Asumo que guardaste el archivo nuevo como 'Home.tsx' dentro de 'pages/Home'
 // Si lo guardaste suelto en pages, borra el '/Home' del final.
-import NewHome from './pages/home/Home'; 
+import NewHome from './pages/Home/Home'; 
 
 // 3. Importación del ANTIGUO Home (Entrenadores)
 // Como en ese archivo se llama "Home", usamos "as" para renombrarlo a "Trainers" y evitar confusiones
