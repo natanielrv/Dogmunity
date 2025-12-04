@@ -14,13 +14,16 @@ export enum BookingStatus {
 @Schema({ timestamps: true })
 export class Booking {
   
+  // ... dentro de la clase Booking
+  @Prop({ required: true })
+  dogName: string; // <--- NUEVO CAMPO
   // ¿Quién contrata? (Dueño de la mascota)
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   ownerId: Types.ObjectId;
 
   // ¿A quién contratan? (Entrenador)
-  @Prop({ type: Types.ObjectId, ref: 'Trainer', required: true })
-  trainerId: Types.ObjectId;
+  @Prop({ required: true })
+  trainerId: string;   // <--- Aceptará "1", "2" o lo que sea
 
   @Prop({ required: true })
   date: Date; // Fecha y hora de la cita
